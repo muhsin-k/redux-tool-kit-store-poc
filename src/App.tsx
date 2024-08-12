@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "./stores/index";
+import { ConversationStore, Conversation } from "./stores/conversationStore";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const dispatch = useDispatch<AppDispatch>();
+  const conversations = useSelector<RootState, Conversation[]>((state) =>
+    ConversationStore.selectors.selectAll(state)
+  );
+  const loading = useSelector<RootState, boolean>((state) =>
+    ConversationStore.selectors.selectLoading(state)
+  );
+  const error = useSelector((state: RootState) =>
+    ConversationStore.selectors.selectError(state)
+  );
+
+  useEffect(() => {
+    dispatch(ConversationStore.actions.fetchAll());
+  }, [dispatch]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      <h2>Conversations</h2>
+      <ul>
+        {conversations.map((conversation) => (
+          <li key={conversation.id}>
+            <h3>{conversation.title}</h3>
+            <p>{conversation.lastMessage}</p>
+            <small>{conversation.timestamp}</small>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
-export default App
+export default App;
